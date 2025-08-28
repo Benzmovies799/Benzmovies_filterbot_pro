@@ -12,20 +12,21 @@ from info import FILE_DB_URL, FILE_DB_NAME, COLLECTION_NAME, MAX_RIST_BTNS
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-
 client = AsyncIOMotorClient(FILE_DB_URL)
 db = client[FILE_DB_NAME]
 instance = Instance.from_db(db)
 
 @instance.register
 class Media(Document):
-    file_id = fields.StringField(attribute='_id')
-    file_ref = fields.StrField(allow_none=True)
-    file_name = fields.StrField(required=True)
+    # ✅ Use StringField without attribute='_id'
+    file_id = fields.StringField(required=True)
+
+    file_ref = fields.StringField(allow_none=True)
+    file_name = fields.StringField(required=True)
     file_size = fields.IntField(required=True)
-    file_type = fields.StrField(allow_none=True)
-    mime_type = fields.StrField(allow_none=True)
-    caption = fields.StrField(allow_none=True)
+    file_type = fields.StringField(allow_none=True)
+    mime_type = fields.StringField(allow_none=True)
+    caption = fields.StringField(allow_none=True)
 
     class Meta:
         collection_name = COLLECTION_NAME
@@ -57,7 +58,6 @@ async def save_file(media):
             return True, 1
 
 
-
 async def get_search_results(query, file_type=None, max_results=(MAX_RIST_BTNS), offset=0, filter=False):
     query = query.strip()
     if not query: raw_pattern = '.'
@@ -73,11 +73,8 @@ async def get_search_results(query, file_type=None, max_results=(MAX_RIST_BTNS),
     if next_offset > total_results: next_offset = ''
 
     cursor = Media.find(filter)
-    # Sort by recent
     cursor.sort('$natural', -1)
-    # Slice files according to offset and max results
     cursor.skip(offset).limit(max_results)
-    # Get list of files
     files = await cursor.to_list(length=max_results)
     return files, next_offset, total_results
 
@@ -111,6 +108,16 @@ def unpack_new_file_id(new_file_id):
     """Return file_id, file_ref"""
     decoded = FileId.decode(new_file_id)
     file_id = encode_file_id(
+        pack(
+            "<iiqq",
+            int(decoded.file_type),
+            decoded.dc_id,
+            decoded.media_id,
+            decoded.access_hash
+        )
+    )
+    file_ref = encode_file_ref(decoded.file_reference)
+    return file_id, file_ref
         pack(
             "<iiqq",
             int(decoded.file_type),
