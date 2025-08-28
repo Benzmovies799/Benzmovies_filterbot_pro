@@ -3,7 +3,7 @@ import os, math, logging, datetime, pytz, logging.config
 from aiohttp import web
 from pyrogram import Client, types
 from database.users_chats_db import db
-from database.ia_filterdb import  Media
+from database.ia_filterdb import Media
 from typing import Union, Optional, AsyncGenerator
 from utils import temp, __repo__, __license__, __copyright__, __version__
 from info import API_ID, API_HASH, BOT_TOKEN, LOG_CHANNEL, UPTIME, WEB_SUPPORT, LOG_MSG
