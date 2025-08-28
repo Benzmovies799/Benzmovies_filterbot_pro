@@ -15,7 +15,7 @@ logger.setLevel(logging.INFO)
 
 client = AsyncIOMotorClient(FILE_DB_URL)
 db = client[FILE_DB_NAME]
-instance = Instance.from_db(db)
+instance = Instance(db)
 
 @instance.register
 class Media(Document):
